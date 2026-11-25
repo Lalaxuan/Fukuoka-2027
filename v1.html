@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FUKUOKA 2027 · Kinfolk Bento Travel Edition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&family=Shippori+Mincho:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    [x-cloak]{display:none!important}
+    body{background:#F9F8F6;color:#1F1E1C;font-family:'Inter','Noto Sans TC',sans-serif;letter-spacing:.01em}
+    .font-serif-en{font-family:'Cormorant Garamond',serif}
+    .font-serif-jp{font-family:'Shippori Mincho',serif}
+    .tabular-nums{font-variant-numeric:tabular-nums}
+    .bento{background:#FFFFFF;border:1px solid #EAE6DF;transition:border-color .3s ease,background-color .3s ease}
+    .bento:hover{border-color:#D5CEC2}
+    .no-scrollbar::-webkit-scrollbar{display:none}
+    .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+    .flip-wrap{perspective:1200px}
+    .flip-card{position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.22,1,.36,1)}
+    .flip-card.flipped{transform:rotateY(180deg)}
+    .flip-face{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .flip-back{transform:rotateY(180deg)}
+    .drag-target{border-color:#1F1E1C!important;background:#F4F1EA!important}
+    .dragging{opacity:.42}
+    @media print{header,.no-print{display:none!important}body{background:#fff!important}}
+
+.kyushu-piece{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .32s cubic-bezier(.16,1,.3,1),fill .25s ease,stroke .25s ease,filter .3s ease}
+    .kyushu-piece:hover{transform:translateY(-5px);filter:drop-shadow(0 10px 16px rgba(158,107,79,.22))}
+    .kyushu-piece.is-active{transform:translateY(-4px);filter:drop-shadow(0 10px 18px rgba(31,30,28,.22))}
+  </style>
+</head>
+<body x-data="kinfolkApp()" x-init="init()" class="min-h-screen antialiased selection:bg-[#1F1E1C] selection:text-[#F9F8F6]">
+
+  <header class="sticky top-0 z-40 bg-[#F9F8F6]/90 backdrop-blur-md border-b border-[#EAE6DF] no-print">
+    <div class="max-w-6xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-baseline gap-3">
+        <span class="font-serif-en text-xl tracking-[0.22em] font-medium text-[#1F1E1C]">FUKUOKA</span>
+        <span class="hidden sm:inline text-[10px] tracking-[0.24em] uppercase text-[#8A847A]">ISSUE 04 · APR 24—30, 2027</span>
+      </div>
+      <nav class="flex items-center gap-4 sm:gap-7 text-xs tracking-[0.14em]">
+        <template x-for="t in TABS" :key="t.id">
+          <button @click="setTab(t.id)" class="py-1 border-b transition" :class="state.tab===t.id?'border-[#1F1E1C] text-[#1F1E1C] font-medium':'border-transparent text-[#8A847A] hover:text-[#1F1E1C]'" x-text="t.label"></button>
+        </template>
+      </nav>
+      <button @click="setTab('budget')" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#EAE6DF] bg-white text-[11px] tabular-nums hover:border-[#1F1E1C] transition">
+        <span class="w-1.5 h-1.5 rounded-full" :class="coreCalc.fhPerPerson>25000?'bg-[#B35340]':'bg-[#4D6155]'"></span>
+        <span x-text="`機加酒 ${fmt(coreCalc.fhPerPerson)}/人`"></span>
+      </button>
+    </div>
+  </header>
+
+  <main
+  x-show="currentPage === 'home'"
+  x-transition:enter="transition ease-out duration-300"
+  x-transition:enter-start="opacity-0 translate-y-2"
+  x-transition:enter-end="opacity-100 translate-y-0"
+  class="max-w-6xl mx-auto px-4 sm:px-8 pt-8 sm:pt-12 pb-28 space-y-12"
+>
+
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-7 group relative overflow-hidden rounded-2xl border border-[#EAE6DF] bg-[#1F1E1C] min-h-[340px] sm:min-h-[410px] flex flex-col justify-between p-7 sm:p-10 text-[#F9F8F6]">
+        <img src="https://travelweekly.com.au/wp-content/uploads/2021/03/photo0423-Kokura-Castle-the-cherry-blossoms01-scaled.jpg" alt="Fukuoka Street Architecture" class="absolute inset-0 w-full h-full object-cover opacity-80 transition-transform duration-700 ease-out group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#181715]/80 via-[#181715]/20 to-transparent"></div>
+        <div class="relative z-10 flex items-center justify-between text-[10px] tracking-[0.28em] uppercase text-[#F9F8F6]/85">
+          <span>KYUSHU EDITORIAL GUIDE</span>
+          <span>2 ADULTS · 7D6N</span>
+        </div>
+        <div class="relative z-10 space-y-2.5">
+          <p class="font-serif-en italic text-lg sm:text-xl font-light text-[#F9F8F6]/85 tracking-wide">Spring Slow Travel</p>
+          <h1 class="font-serif-en text-5xl sm:text-6xl font-light tracking-[0.14em] leading-none">FUKUOKA 2027</h1>
+          <div class="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#F9F8F6]/80 font-light">
+            <span class="font-serif-jp tracking-widest">福岡・北九州 七日旅誌</span>
+            <span class="opacity-40">|</span>
+            <span>04.24 (六) — 04.30 (五)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2 bento rounded-2xl p-6 flex flex-col justify-between gap-4">
+          <div class="flex items-center justify-between text-[10px] tracking-[0.24em] uppercase text-[#8A847A]">
+            <span>DEPARTURE COUNTDOWN</span>
+            <span class="tabular-nums text-[#1F1E1C]" x-text="`行程完成 ${progress.pct}%`"></span>
+          </div>
+          <div class="grid grid-cols-4 gap-2 text-center tabular-nums">
+            <div class="py-2 border-r border-[#EAE6DF]"><div class="font-serif-en text-3xl sm:text-4xl font-light text-[#1F1E1C]" x-text="cd.d"></div><div class="text-[10px] tracking-[0.2em] text-[#8A847A] mt-1">DAYS</div></div>
+            <div class="py-2 border-r border-[#EAE6DF]"><div class="font-serif-en text-3xl sm:text-4xl font-light text-[#1F1E1C]" x-text="cd.h"></div><div class="text-[10px] tracking-[0.2em] text-[#8A847A] mt-1">HRS</div></div>
+            <div class="py-2 border-r border-[#EAE6DF]"><div class="font-serif-en text-3xl sm:text-4xl font-light text-[#1F1E1C]" x-text="cd.m"></div><div class="text-[10px] tracking-[0.2em] text-[#8A847A] mt-1">MIN</div></div>
+            <div class="py-2"><div class="font-serif-en text-3xl sm:text-4xl font-light text-[#9E6B4F]" x-text="cd.s"></div><div class="text-[10px] tracking-[0.2em] text-[#8A847A] mt-1">SEC</div></div>
+          </div>
+        </div>
+
+        <div class="flip-wrap min-h-[215px] cursor-pointer" @click="passFlipped=!passFlipped">
+          <div class="flip-card h-full w-full" :class="passFlipped?'flipped':''">
+            <div class="flip-face absolute inset-0 bento rounded-2xl p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase text-[#8A847A]">
+                <span>BOARDING PASS</span>
+                <i data-lucide="rotate-cw" class="w-3.5 h-3.5 text-[#9E6B4F]"></i>
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between font-serif-en text-3xl font-light text-[#1F1E1C]">
+                  <span>TPE</span><i data-lucide="plane" class="w-4 h-4 text-[#8A847A]"></i><span>FUK</span>
+                </div>
+                <div class="text-[11px] text-[#6F6A62] tabular-nums" x-text="`${selectedFlight.code} · ${selectedFlight.outTime}`"></div>
+                <div class="text-[11px] text-[#8A847A] tabular-nums" x-text="`返程 ${selectedFlight.inTime}`"></div>
+              </div>
+              <div class="pt-3 border-t border-dashed border-[#EAE6DF] flex items-center justify-between text-xs">
+                <span class="font-medium tabular-nums text-[#1F1E1C]" x-text="`${fmt(state.flightPrice)}/人`"></span>
+                <span class="text-[10px] text-[#8A847A]">點擊翻面</span>
+              </div>
+            </div>
+            <div class="flip-face flip-back absolute inset-0 rounded-2xl border border-[#1F1E1C] bg-[#1F1E1C] text-[#F9F8F6] p-5 flex flex-col justify-between">
+              <div class="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase text-[#C9C2B6]">
+                <span>BAGGAGE &amp; FLIGHT</span><span>翻回正面</span>
+              </div>
+              <p class="text-[11px] leading-relaxed text-[#F9F8F6]/85" x-text="selectedFlight.baggage"></p>
+              <div @click.stop class="space-y-1.5">
+                <select x-model="state.flightId" @change="onFlightChange()" class="w-full px-2.5 py-1.5 rounded-lg bg-[#2C2A27] border border-white/15 text-[11px] text-[#F9F8F6]">
+                  <template x-for="f in tripData.flights" :key="f.id"><option :value="f.id" x-text="`${f.shortName} (${fmt(f.price)})`"></option></template>
+                </select>
+                <p class="text-[10px] text-[#C9C2B6]" x-text="selectedFlight.terminal"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bento rounded-2xl p-5 flex flex-col justify-between min-h-[215px]">
+          <div class="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase text-[#8A847A]">
+            <span>STAY · 6 NIGHTS</span>
+            <span class="text-[#4D6155] font-medium" x-text="`${selectedHotel.sqm}㎡`"></span>
+          </div>
+          <div class="space-y-1.5">
+            <h2 class="font-serif-jp text-lg font-medium text-[#1F1E1C] leading-snug" x-text="selectedHotel.shortName"></h2>
+            <p class="text-[11px] text-[#6F6A62]" x-text="selectedHotel.area"></p>
+            <div class="flex flex-wrap gap-1 pt-1 text-[10px]">
+              <span class="px-2 py-0.5 rounded-full border border-[#EAE6DF] text-[#4D6155]" x-text="selectedHotel.kitchenTxt"></span>
+              <span class="px-2 py-0.5 rounded-full border border-[#EAE6DF] text-[#6F6A62]" x-text="selectedHotel.luggageTxt"></span>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-[#EAE6DF] flex items-center justify-between text-xs">
+            <span class="font-medium tabular-nums" x-text="fmt(coreCalc.totalDouble)"></span>
+            <button @click="setTab('hotels')" class="text-[11px] text-[#9E6B4F] hover:text-[#1F1E1C] transition inline-flex items-center gap-0.5">比較 8 間<i data-lucide="arrow-up-right" class="w-3 h-3"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section x-show="state.tab==='itinerary'" x-cloak class="space-y-8">
+      <div class="border-b border-[#EAE6DF] pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+          <template x-for="d in tripData.daysMeta" :key="d.day">
+            <button @click="switchDay(d.day)" @dragover.prevent="dragOverDay=d.day" @dragleave="if(dragOverDay===d.day)dragOverDay=null" @drop.prevent="dropOnDay(d.day)" class="px-3.5 py-2 rounded-full text-xs transition shrink-0 flex items-center gap-1.5 border" :class="[activeDay===d.day?'bg-[#1F1E1C] text-[#F9F8F6] border-[#1F1E1C]':'bg-white text-[#6F6A62] border-[#EAE6DF] hover:border-[#1F1E1C]',dragOverDay===d.day?'!border-[#9E6B4F] !bg-[#F4EFE8] !text-[#1F1E1C]':'']">
+              <span class="font-serif-en text-sm" x-text="`0${d.day}`"></span>
+              <span x-text="`${d.date.slice(5)} (${d.w})`"></span>
+            </button>
+          </template>
+        </div>
+        <div class="flex items-center gap-2 text-xs shrink-0">
+          <button @click="applyPreset('relaxed')" class="px-3.5 py-1.5 rounded-full border border-[#EAE6DF] bg-white hover:border-[#1F1E1C] transition">不累慢遊版</button>
+          <button @click="applyPreset('jr5')" class="px-3.5 py-1.5 rounded-full border border-[#EAE6DF] bg-white hover:border-[#1F1E1C] transition">JR 5日經典版</button>
+        </div>
+      </div>
+
+      <div class="bento rounded-2xl p-6 space-y-5">
+        <div class="flex flex-col md:flex-row md:items-baseline justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex flex-wrap items-center gap-2.5 text-[11px]">
+              <span class="font-serif-en tracking-[0.22em] uppercase text-[#9E6B4F]" x-text="`DAY 0${activeDay} · ${currentMeta.date} (${currentMeta.w})`"></span>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#F9F8F6] border border-[#EAE6DF] text-[#6F6A62]" x-text="currentMeta.badge"></span>
+            </div>
+            <h2 class="font-serif-jp text-2xl font-medium text-[#1F1E1C]" x-text="tripData.themes[currentDay.themeKey].label"></h2>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-[#6F6A62]">
+            <span>當日交通/跟團(人)</span>
+            <input type="number" step="50" x-model.number="currentDay.transportCost" @change="save()" class="w-24 px-2.5 py-1 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-right font-medium text-[#1F1E1C] tabular-nums" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-4 border-t border-[#EAE6DF] items-center">
+          <div class="lg:col-span-5 flex items-center gap-2">
+            <span class="text-xs text-[#8A847A] shrink-0">當日主題</span>
+            <select :value="currentDay.themeKey" @change="changeTheme(activeDay,$event.target.value)" class="w-full px-3 py-2 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-xs text-[#1F1E1C]">
+              <template x-for="(tv,tk) in tripData.themes" :key="tk"><option :value="tk" x-text="tv.label"></option></template>
+            </select>
+          </div>
+          <div class="lg:col-span-7 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span class="text-[11px] text-[#8A847A] shrink-0 mr-1">美食安插：</span>
+            <template x-for="fd in tripData.foods" :key="fd.id">
+              <button @click="toggleFood(fd.id)" class="px-2.5 py-1 rounded-full border text-[11px] shrink-0 transition" :class="state.checkedFoods[fd.id]?'bg-[#1F1E1C] text-[#F9F8F6] border-[#1F1E1C]':'bg-[#F9F8F6] text-[#6F6A62] border-[#EAE6DF] hover:border-[#1F1E1C]'" x-text="state.checkedFoods[fd.id]?`✓ ${fd.short} D${state.checkedFoods[fd.id]}`:`+ ${fd.short}`"></button>
+            </template>
+          </div>
+        </div>
+        <div x-show="wagyuWarning" class="p-3 rounded-xl bg-[#FAF4EF] border border-[#E7D4C5] text-[#8A5032] text-xs flex items-center gap-2">
+          <i data-lucide="info" class="w-4 h-4 shrink-0"></i><span x-text="wagyuWarning"></span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between text-[11px] text-[#8A847A] px-1">
+          <span class="inline-flex items-center gap-1.5"><i data-lucide="grip-vertical" class="w-3.5 h-3.5"></i>可上下拖拉排序，或將卡片直接拖曳至上方 Day 1–7 跨日移動</span>
+          <span>點擊卡片展開攻略與地圖</span>
+        </div>
+
+        <template x-for="(it,idx) in currentDay.items" :key="it.id">
+          <article draggable="true" @dragstart="onDragStart(idx,it,$event)" @dragover.prevent="dragOverIdx=idx" @dragleave="if(dragOverIdx===idx)dragOverIdx=null" @drop.prevent="onDropItem(idx)" @dragend="onDragEnd()" class="day-item bento rounded-2xl overflow-hidden" :class="[dragIdx===idx?'dragging':'',dragOverIdx===idx&&dragIdx!==idx?'drag-target':'',isDone(it.id)?'opacity-55':'']">
+            <div @click="openId=openId===it.id?null:it.id" class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer">
+              <div class="flex items-start gap-3.5 min-w-0">
+                <div class="mt-1 text-[#C5BEB2] hover:text-[#1F1E1C] cursor-grab active:cursor-grabbing shrink-0" title="按住拖拉調整順序">
+                  <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                </div>
+                <span class="font-serif-en text-lg text-[#9E6B4F] tabular-nums w-12 shrink-0 leading-snug" x-text="it.time"></span>
+                <div class="min-w-0 space-y-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-full border border-[#EAE6DF] bg-[#F9F8F6] text-[10px] tracking-wider text-[#6F6A62]" x-text="it.category"></span>
+                    <h3 class="font-serif-jp text-base sm:text-lg font-medium text-[#1F1E1C]" :class="isDone(it.id)?'line-through':''" x-text="it.title"></h3>
+                  </div>
+                  <p class="text-xs text-[#6F6A62] leading-relaxed" :class="isDone(it.id)?'line-through':''" x-text="it.note"></p>
+                </div>
+              </div>
+              <div @click.stop class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                <button @click="moveStep(idx,-1)" :disabled="idx===0" class="p-1.5 rounded-lg text-[#8A847A] hover:text-[#1F1E1C] disabled:opacity-20" title="上移"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button>
+                <button @click="moveStep(idx,1)" :disabled="idx===currentDay.items.length-1" class="p-1.5 rounded-lg text-[#8A847A] hover:text-[#1F1E1C] disabled:opacity-20" title="下移"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+                <button @click="toggleDone(it.id)" class="w-7 h-7 rounded-full border flex items-center justify-center transition" :class="isDone(it.id)?'bg-[#4D6155] border-[#4D6155] text-white':'border-[#EAE6DF] text-[#8A847A] hover:border-[#1F1E1C]'" title="完成"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>
+                <button @click="delItem(it.id)" class="w-7 h-7 rounded-full border border-[#EAE6DF] text-[#8A847A] hover:border-[#B35340] hover:text-[#B35340] flex items-center justify-center transition" title="刪除"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+              </div>
+            </div>
+            <div x-show="openId===it.id" x-collapse.duration.300ms x-transition class="px-5 sm:px-14 pb-5 pt-4 border-t border-[#EAE6DF] bg-[#FCFBF9] grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
+              <div class="md:col-span-4 space-y-1">
+                <div class="text-[10px] tracking-[0.2em] uppercase text-[#8A847A]">ACCESS · 交通建議</div>
+                <p class="text-[#1F1E1C]/85 leading-relaxed" x-text="`${selectedHotel.shortName} ➔ ${getGuide(it).transit}（${getGuide(it).dur}）`"></p>
+              </div>
+              <div class="md:col-span-5 space-y-1">
+                <div class="text-[10px] tracking-[0.2em] uppercase text-[#8A847A]">NOTES · 必吃與拍照機位</div>
+                <p class="text-[#1F1E1C]/85 leading-relaxed" x-text="getGuide(it).tip"></p>
+              </div>
+              <div class="md:col-span-3 flex items-end md:justify-end">
+                <a :href="mapsUrl(it.title)" target="_blank" rel="noopener noreferrer" class="w-full md:w-auto px-4 py-2.5 rounded-full bg-[#1F1E1C] text-[#F9F8F6] hover:bg-[#3A3834] text-xs inline-flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span>Google Maps</span>
+                </a>
+              </div>
+            </div>
+          </article>
+        </template>
+
+        <div class="bento rounded-2xl p-4 flex flex-col sm:flex-row gap-2.5">
+          <input type="time" x-model="newItem.time" class="px-3 py-2 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-xs tabular-nums" />
+          <select x-model="newItem.category" class="px-3 py-2 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-xs"><option>景點</option><option>美食</option><option>購物</option><option>交通</option><option>住宿</option></select>
+          <input type="text" x-model="newItem.title" placeholder="新增行程名稱..." class="flex-1 px-3 py-2 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-xs" />
+          <input type="text" x-model="newItem.note" placeholder="備註（選填）" class="sm:w-44 px-3 py-2 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-xs" />
+          <button @click="addItem()" class="px-5 py-2 rounded-full bg-[#1F1E1C] text-[#F9F8F6] hover:bg-[#3A3834] text-xs transition shrink-0">+ 加入本日</button>
+        </div>
+      </div>
+    </section>
+
+    <section x-show="state.tab==='hotels'" x-cloak class="space-y-6">
+      <div class="bento rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap gap-2 text-xs">
+          <button @click="hf.k=!hf.k" class="px-3.5 py-1.5 rounded-full border transition" :class="hf.k?'bg-[#1F1E1C] text-white border-[#1F1E1C]':'bg-[#F9F8F6] border-[#EAE6DF] text-[#6F6A62]'">可開火煮食</button>
+          <button @click="hf.l=!hf.l" class="px-3.5 py-1.5 rounded-full border transition" :class="hf.l?'bg-[#1F1E1C] text-white border-[#1F1E1C]':'bg-[#F9F8F6] border-[#EAE6DF] text-[#6F6A62]'">飯店可寄放</button>
+          <button @click="hf.s=!hf.s" class="px-3.5 py-1.5 rounded-full border transition" :class="hf.s?'bg-[#1F1E1C] text-white border-[#1F1E1C]':'bg-[#F9F8F6] border-[#EAE6DF] text-[#6F6A62]'">房間 ≥20㎡</button>
+          <button @click="hf={k:false,l:false,s:false,max:35000}" class="px-2.5 py-1.5 text-[#9E6B4F]">重設</button>
+        </div>
+        <div class="flex items-center gap-3 text-xs tabular-nums text-[#6F6A62]">
+          <span x-text="`6晚含稅上限 ≤ ${fmt(hf.max)}`"></span>
+          <input type="range" min="15000" max="35000" step="500" x-model.number="hf.max" class="w-32 accent-[#1F1E1C]" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <template x-for="c in filteredHotels" :key="c.h.id">
+          <article class="bento rounded-2xl p-6 flex flex-col justify-between gap-5" :class="state.hotelId===c.h.id?'!border-[#1F1E1C]':''">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <span class="text-[10px] tracking-[0.2em] uppercase text-[#8A847A]" x-text="`${c.h.sqm}㎡ · ${c.h.statusLabel}`"></span>
+                  <h3 class="font-serif-jp text-lg font-medium text-[#1F1E1C] mt-0.5" x-text="c.h.name"></h3>
+                  <p class="text-xs text-[#6F6A62] mt-0.5" x-text="c.h.area"></p>
+                </div>
+                <button @click="state.hotelId=c.h.id;save();toast(`已鎖定 ${c.h.shortName}`)" class="px-3.5 py-1.5 rounded-full text-xs shrink-0 transition" :class="state.hotelId===c.h.id?'bg-[#1F1E1C] text-white':'border border-[#EAE6DF] text-[#1F1E1C] hover:border-[#1F1E1C]'" x-text="state.hotelId===c.h.id?'✓ 鎖定中':'鎖定'"></button>
+              </div>
+              <div class="flex flex-wrap gap-1.5 text-[11px]">
+                <span class="px-2.5 py-0.5 rounded-full border" :class="c.h.kitchen==='no'?'border-[#E6CFC9] text-[#9E4F3D] bg-[#FAF4F2]':'border-[#D2DDD6] text-[#3F574A] bg-[#F4F7F5]'" x-text="`開火：${c.h.kitchenTxt}`"></span>
+                <span class="px-2.5 py-0.5 rounded-full border" :class="c.h.luggage==='no'?'border-[#E6CFC9] text-[#9E4F3D] bg-[#FAF4F2]':'border-[#EAE6DF] text-[#6F6A62] bg-[#F9F8F6]'" x-text="`寄放：${c.h.luggageTxt}`"></span>
+                <span class="px-2.5 py-0.5 rounded-full border border-[#EAE6DF] bg-[#F9F8F6] text-[#6F6A62]" x-text="c.h.laundry"></span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs pt-1 text-[#6F6A62]">
+                <div><span class="text-[#4D6155] font-medium">優勢：</span><span x-text="c.h.pros"></span></div>
+                <div><span class="text-[#9E6B4F] font-medium">留意：</span><span x-text="c.h.cons"></span></div>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-[#EAE6DF] space-y-3">
+              <div class="flex flex-wrap gap-2">
+                <template x-for="pl in c.h.platforms" :key="pl.name">
+                  <a :href="pl.url" target="_blank" rel="noopener noreferrer" class="px-3 py-1 rounded-full border border-[#EAE6DF] text-[11px] text-[#6F6A62] hover:border-[#1F1E1C] hover:text-[#1F1E1C] transition" x-text="`${pl.name} ↗`"></a>
+                </template>
+              </div>
+              <div class="grid grid-cols-3 gap-2.5 items-end text-xs">
+                <div><label class="text-[10px] text-[#8A847A] block mb-1">6晚房價</label><input type="number" step="100" x-model.number="state.hotelPrices[c.h.id]" @change="save()" class="w-full px-2.5 py-1.5 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] tabular-nums" /></div>
+                <div><label class="text-[10px] text-[#8A847A] block mb-1">外寄行李</label><select x-model="state.hotelLugs[c.h.id]" @change="save()" class="w-full px-2 py-1.5 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] text-[11px]"><template x-for="lp in tripData.lugPlans" :key="lp.id"><option :value="lp.id" x-text="`${lp.short}(+${lp.cost})`"></option></template></select></div>
+                <div class="text-right tabular-nums"><div class="text-[10px] text-[#8A847A]">每人機加酒</div><div class="font-serif-en text-xl font-medium" :class="c.fhPerPerson>25000?'text-[#B35340]':'text-[#4D6155]'" x-text="fmt(c.fhPerPerson)"></div></div>
+              </div>
+            </div>
+          </article>
+        </template>
+      </div>
+    </section>
+
+    <section x-show="state.tab==='guide'" x-cloak class="space-y-8">
+      <div class="bento rounded-2xl p-6 space-y-2">
+        <span class="text-[10px] tracking-[0.24em] uppercase text-[#9E6B4F]">LUGGAGE &amp; SUPERMARKETS</span>
+        <h2 class="font-serif-jp text-2xl font-medium text-[#1F1E1C]">博多平價寄物點與和牛超市指南</h2>
+        <p class="text-xs text-[#6F6A62] leading-relaxed">福岡並無名為「大黑置物櫃」的連鎖店；改選大空間無人公寓搭配博多站 ¥500–800 預約寄物，兩人去回 4 件次僅約 NT$420–680。</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <template x-for="s in tripData.lockers" :key="s.name">
+          <div class="bento rounded-2xl p-5 flex flex-col justify-between gap-4">
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-[11px]"><span class="text-[#4D6155] font-medium" x-text="s.tag"></span><span class="tabular-nums font-medium text-[#9E6B4F]" x-text="s.price"></span></div>
+              <h3 class="font-serif-jp text-base font-medium text-[#1F1E1C]" x-text="s.name"></h3>
+              <p class="text-[11px] text-[#8A847A]" x-text="`${s.dist} · ${s.hours}`"></p>
+              <p class="text-xs text-[#6F6A62] leading-relaxed" x-text="s.desc"></p>
+            </div>
+            <div class="pt-3 border-t border-[#EAE6DF] flex justify-between text-xs"><span class="text-[#8A847A] tabular-nums" x-text="`4件次約 ${fmt(s.cost4)}`"></span><a :href="s.url||mapsUrl(s.name)" target="_blank" rel="noopener noreferrer" class="text-[#1F1E1C] hover:text-[#9E6B4F]">地圖 / 預約 ↗</a></div>
+          </div>
+        </template>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <template x-for="m in tripData.markets" :key="m.name">
+          <div class="bento rounded-2xl p-6 space-y-2">
+            <div class="flex justify-between items-baseline gap-2"><h3 class="font-serif-jp text-base font-medium text-[#1F1E1C]" x-text="m.name"></h3><span class="text-[10px] tracking-wider uppercase text-[#9E6B4F] shrink-0" x-text="m.badge"></span></div>
+            <p class="text-[11px] text-[#8A847A]" x-text="`${m.walk} · ${m.hours}`"></p>
+            <p class="text-xs text-[#6F6A62] leading-relaxed" x-text="m.desc"></p>
+            <div class="pt-3 border-t border-[#EAE6DF] flex justify-between items-center text-[11px] text-[#8A847A] gap-2"><span x-text="m.tip"></span><a :href="mapsUrl(m.name)" target="_blank" rel="noopener noreferrer" class="text-[#1F1E1C] shrink-0">地圖 ↗</a></div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section x-show="state.tab==='budget'" x-cloak class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-7 bento rounded-2xl p-6 space-y-5">
+        <div class="flex items-baseline justify-between">
+          <div><span class="text-[10px] tracking-[0.24em] uppercase text-[#9E6B4F]">BUDGET SUMMARY</span><h2 class="font-serif-jp text-2xl font-medium mt-1">機加酒與全趟支出</h2></div>
+          <button @click="window.print()" class="no-print px-3.5 py-1.5 rounded-full border border-[#EAE6DF] text-xs hover:border-[#1F1E1C]">列印總表</button>
+        </div>
+        <div class="divide-y divide-[#EAE6DF] text-xs sm:text-sm tabular-nums">
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]" x-text="`來回機票 (${selectedFlight.shortName})`"></span><span x-text="`${fmt(state.flightPrice)} / 人`"></span></div>
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]" x-text="`6晚住宿 (${selectedHotel.shortName})`"></span><span x-text="`${fmt(coreCalc.room6N/2)} / 人`"></span></div>
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]">福岡市住宿稅 (現場另繳 ¥1,200/人)</span><span>NT$250 / 人</span></div>
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]">額外寄放行李費</span><span x-text="`${fmt(coreCalc.lugCost/2)} / 人`"></span></div>
+          <div class="py-3 flex justify-between font-medium text-[#1F1E1C]"><span>機加酒小計（目標 ≤ NT$25,000）</span><span :class="coreCalc.fhPerPerson>25000?'text-[#B35340]':'text-[#4D6155]'" x-text="`${fmt(coreCalc.fhPerPerson)} / 人（雙人 ${fmt(coreCalc.fhDouble)}）`"></span></div>
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]">7 天當地交通／一日遊預估</span><span x-text="`${fmt(totalTransport)} / 人`"></span></div>
+          <div class="py-3 flex justify-between"><span class="text-[#6F6A62]">隨手記帳均分</span><span x-text="`${fmt(ledgerTwd/2)} / 人`"></span></div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 space-y-4">
+        <div class="bento rounded-2xl p-6 space-y-4">
+          <div class="flex justify-between items-center text-xs"><span class="text-[10px] tracking-[0.22em] uppercase text-[#8A847A]">JPY / TWD 換算</span><input type="number" step="0.005" x-model.number="state.fxRate" @input="syncJpy()" class="w-20 px-2 py-1 rounded border border-[#EAE6DF] bg-[#F9F8F6] text-right tabular-nums" /></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 rounded-xl bg-[#F9F8F6] border border-[#EAE6DF]"><label class="text-[10px] text-[#8A847A] block">JPY (¥)</label><input type="number" x-model.number="fxJpy" @input="syncJpy()" class="w-full bg-transparent font-serif-en text-2xl tabular-nums focus:outline-none" /></div>
+            <div class="p-3 rounded-xl bg-[#F9F8F6] border border-[#EAE6DF]"><label class="text-[10px] text-[#8A847A] block">TWD (NT$)</label><input type="number" x-model.number="fxTwd" @input="syncTwd()" class="w-full bg-transparent font-serif-en text-2xl tabular-nums focus:outline-none" /></div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <template x-for="a in [500,1000,3000,5000,10000]" :key="a"><button @click="fxJpy=a;syncJpy()" class="px-2.5 py-1 rounded-full border border-[#EAE6DF] text-[11px] tabular-nums hover:border-[#1F1E1C]" x-text="`¥${a.toLocaleString()}`"></button></template>
+          </div>
+        </div>
+
+        <div class="bento rounded-2xl p-6 space-y-3">
+          <div class="flex justify-between items-baseline"><span class="text-[10px] tracking-[0.22em] uppercase text-[#8A847A]">EXPENSE LEDGER</span><span class="text-xs tabular-nums text-[#4D6155]" x-text="`合計 ${fmt(ledgerTwd)}`"></span></div>
+          <div class="grid grid-cols-12 gap-2 text-xs">
+            <input type="text" x-model="exp.name" placeholder="品項（和牛/拉麵）" class="col-span-6 px-2.5 py-1.5 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6]" />
+            <select x-model="exp.cur" class="col-span-2 px-1 py-1.5 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6]"><option value="JPY">¥</option><option value="TWD">NT</option></select>
+            <input type="number" x-model.number="exp.amt" placeholder="金額" class="col-span-4 px-2 py-1.5 rounded-lg border border-[#EAE6DF] bg-[#F9F8F6] tabular-nums" />
+            <button @click="addExp()" class="col-span-12 py-2 rounded-full bg-[#1F1E1C] text-[#F9F8F6] text-xs hover:bg-[#3A3834] transition">+ 記一筆消費</button>
+          </div>
+          <div class="space-y-1.5 max-h-40 overflow-y-auto text-xs">
+            <template x-for="e in state.expenses" :key="e.id">
+              <div class="py-1.5 border-b border-[#EAE6DF] flex justify-between items-center tabular-nums">
+                <span x-text="e.name"></span>
+                <div class="flex items-center gap-2"><span class="text-[#9E6B4F]" x-text="e.cur==='JPY'?`¥${e.amt.toLocaleString()}`:fmt(e.amt)"></span><button @click="delExp(e.id)" class="text-[#8A847A] hover:text-[#B35340]"><i data-lucide="x" class="w-3.5 h-3.5"></i></button></div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+<section
+    x-show="currentPage === 'map'"
+    x-cloak
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-2"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    class="max-w-6xl mx-auto px-4 sm:px-8 pt-8 sm:pt-12 pb-28 space-y-6"
+  >
+    <div class="bento rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div class="space-y-1.5">
+        <span class="text-[10px] tracking-[0.24em] uppercase text-[#9E6B4F]">KYUSHU ATLAS · INTERACTIVE MAP</span>
+        <h2 class="font-serif-jp text-2xl sm:text-3xl font-medium text-[#1F1E1C]">探索福岡與北九州地圖</h2>
+        <p class="text-xs text-[#6F6A62]">串聯博多住宿、機場動線、唐戶市場、海之中道與九州一日遊景點位置。</p>
+      </div>
+      <button @click="switchPage('home')" class="self-start sm:self-auto px-4 py-2 rounded-full border border-[#EAE6DF] bg-[#F9F8F6] hover:border-[#1F1E1C] text-xs text-[#1F1E1C] inline-flex items-center gap-1.5 transition">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i><span>返回行程總覽</span>
+      </button>
+    </div>
+
+    <!-- 下一輪互動地圖模組插入區 -->
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <!-- 左側：九州幾何拼圖互動地圖 -->
+      <div class="lg:col-span-7 bento rounded-2xl p-5 sm:p-7 relative overflow-hidden bg-[#FCFBF9]">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div>
+            <span class="text-[10px] tracking-[0.22em] uppercase text-[#8A847A]">STYLIZED ATLAS · 7 PREFECTURES</span>
+            <p class="font-serif-jp text-sm text-[#6F6A62] mt-0.5">懸停預覽氛圍，點擊縣市切換右側攻略</p>
+          </div>
+          <!-- 懸停動態氛圍標籤浮動卡 -->
+          <div class="min-h-[54px] px-3.5 py-2 rounded-xl border border-[#EAE6DF] bg-white/95 text-right transition-all duration-300" :class="hoverPref?'border-[#9E6B4F] shadow-sm':'opacity-85'">
+            <div class="text-[10px] tracking-[0.18em] uppercase text-[#9E6B4F]" x-text="hoverPrefObj.en"></div>
+            <div class="font-serif-jp text-sm font-medium text-[#1F1E1C]" x-text="hoverPrefObj.name"></div>
+            <div class="flex flex-wrap justify-end gap-1 mt-1">
+              <template x-for="tag in hoverPrefObj.tags" :key="tag">
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#F9F8F6] border border-[#EAE6DF] text-[#6F6A62]" x-text="tag"></span>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 350 415" class="w-full max-w-[410px] mx-auto select-none overflow-visible my-2" role="img" aria-label="九州七縣幾何互動地圖">
+          <g fill="none" stroke="#EAE6DF" stroke-width="0.8" stroke-dasharray="3 4">
+            <circle cx="175" cy="205" r="158" /><circle cx="175" cy="205" r="112" />
+          </g>
+          <g class="kyushu-piece" :class="activePref==='fukuoka'?'is-active':''" @mouseenter="hoverPref='fukuoka'" @mouseleave="hoverPref=null" @click="selectPref('fukuoka')">
+            <polygon points="142,32 222,26 234,74 196,112 146,110 134,74" stroke-linejoin="round" :stroke-width="activePref==='fukuoka'||hoverPref==='fukuoka'?1.8:1.2" :fill="activePref==='fukuoka'?'#1F1E1C':(hoverPref==='fukuoka'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='fukuoka'||hoverPref==='fukuoka'?'#9E6B4F':'#D8D1C5'" />
+            <text x="182" y="72" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='fukuoka'?'#F9F8F6':'#1F1E1C'">福岡</text>
+            <text x="182" y="86" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='fukuoka'?'#D4B59E':'#8A847A'">FUKUOKA</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='saga'?'is-active':''" @mouseenter="hoverPref='saga'" @mouseleave="hoverPref=null" @click="selectPref('saga')">
+            <polygon points="82,78 126,76 138,112 118,140 76,130" stroke-linejoin="round" :stroke-width="activePref==='saga'||hoverPref==='saga'?1.8:1.2" :fill="activePref==='saga'?'#1F1E1C':(hoverPref==='saga'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='saga'||hoverPref==='saga'?'#9E6B4F':'#D8D1C5'" />
+            <text x="108" y="109" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='saga'?'#F9F8F6':'#1F1E1C'">佐賀</text>
+            <text x="108" y="123" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='saga'?'#D4B59E':'#8A847A'">SAGA</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='nagasaki'?'is-active':''" @mouseenter="hoverPref='nagasaki'" @mouseleave="hoverPref=null" @click="selectPref('nagasaki')">
+            <polygon points="34,114 70,132 108,148 96,204 54,206 28,164" stroke-linejoin="round" :stroke-width="activePref==='nagasaki'||hoverPref==='nagasaki'?1.8:1.2" :fill="activePref==='nagasaki'?'#1F1E1C':(hoverPref==='nagasaki'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='nagasaki'||hoverPref==='nagasaki'?'#9E6B4F':'#D8D1C5'" />
+            <text x="67" y="165" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='nagasaki'?'#F9F8F6':'#1F1E1C'">長崎</text>
+            <text x="67" y="179" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='nagasaki'?'#D4B59E':'#8A847A'">NAGASAKI</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='oita'?'is-active':''" @mouseenter="hoverPref='oita'" @mouseleave="hoverPref=null" @click="selectPref('oita')">
+            <polygon points="242,78 294,86 312,140 272,182 222,168 204,116" stroke-linejoin="round" :stroke-width="activePref==='oita'||hoverPref==='oita'?1.8:1.2" :fill="activePref==='oita'?'#1F1E1C':(hoverPref==='oita'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='oita'||hoverPref==='oita'?'#9E6B4F':'#D8D1C5'" />
+            <text x="258" y="130" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='oita'?'#F9F8F6':'#1F1E1C'">大分</text>
+            <text x="258" y="144" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='oita'?'#D4B59E':'#8A847A'">OITA</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='kumamoto'?'is-active':''" @mouseenter="hoverPref='kumamoto'" @mouseleave="hoverPref=null" @click="selectPref('kumamoto')">
+            <polygon points="124,146 196,120 214,172 206,244 146,260 112,214" stroke-linejoin="round" :stroke-width="activePref==='kumamoto'||hoverPref==='kumamoto'?1.8:1.2" :fill="activePref==='kumamoto'?'#1F1E1C':(hoverPref==='kumamoto'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='kumamoto'||hoverPref==='kumamoto'?'#9E6B4F':'#D8D1C5'" />
+            <text x="166" y="194" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='kumamoto'?'#F9F8F6':'#1F1E1C'">熊本</text>
+            <text x="166" y="208" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='kumamoto'?'#D4B59E':'#8A847A'">KUMAMOTO</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='miyazaki'?'is-active':''" @mouseenter="hoverPref='miyazaki'" @mouseleave="hoverPref=null" @click="selectPref('miyazaki')">
+            <polygon points="222,176 274,190 290,248 256,320 210,308 214,248" stroke-linejoin="round" :stroke-width="activePref==='miyazaki'||hoverPref==='miyazaki'?1.8:1.2" :fill="activePref==='miyazaki'?'#1F1E1C':(hoverPref==='miyazaki'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='miyazaki'||hoverPref==='miyazaki'?'#9E6B4F':'#D8D1C5'" />
+            <text x="247" y="248" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='miyazaki'?'#F9F8F6':'#1F1E1C'">宮崎</text>
+            <text x="247" y="262" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='miyazaki'?'#D4B59E':'#8A847A'">MIYAZAKI</text>
+          </g>
+          <g class="kyushu-piece" :class="activePref==='kagoshima'?'is-active':''" @mouseenter="hoverPref='kagoshima'" @mouseleave="hoverPref=null" @click="selectPref('kagoshima')">
+            <polygon points="116,268 150,268 206,252 202,314 234,344 196,392 162,364 130,384 102,326" stroke-linejoin="round" :stroke-width="activePref==='kagoshima'||hoverPref==='kagoshima'?1.8:1.2" :fill="activePref==='kagoshima'?'#1F1E1C':(hoverPref==='kagoshima'?'#FAF1E8':'#FFFFFF')" :stroke="activePref==='kagoshima'||hoverPref==='kagoshima'?'#9E6B4F':'#D8D1C5'" />
+            <text x="162" y="325" text-anchor="middle" class="font-serif-jp text-[13px] font-medium pointer-events-none" :fill="activePref==='kagoshima'?'#F9F8F6':'#1F1E1C'">鹿兒島</text>
+            <text x="162" y="339" text-anchor="middle" class="font-serif-en text-[8.5px] tracking-[0.16em] uppercase pointer-events-none" :fill="activePref==='kagoshima'?'#D4B59E':'#8A847A'">KAGOSHIMA</text>
+          </g>
+        </svg>
+
+        <!-- 快速膠囊切換（方便手機單手點選） -->
+        <div class="flex flex-wrap justify-center gap-1.5 pt-3 border-t border-[#EAE6DF]">
+          <template x-for="p in KYUSHU_MAP" :key="p.id">
+            <button @click="selectPref(p.id)" class="px-3 py-1 rounded-full text-[11px] border transition" :class="activePref===p.id?'bg-[#1F1E1C] text-[#F9F8F6] border-[#1F1E1C]':'bg-white text-[#6F6A62] border-[#EAE6DF] hover:border-[#9E6B4F]'" x-text="p.short"></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- 右側：區域靈感卡片 + 靈感清單 -->
+      <div class="lg:col-span-5 space-y-4">
+        <article :key="activePref" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bento rounded-2xl p-6 space-y-5">
+          <div class="flex items-start justify-between gap-3 border-b border-[#EAE6DF] pb-4">
+            <div>
+              <div class="flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase text-[#9E6B4F]">
+                <span x-text="activePrefObj.en"></span><span>·</span><span x-text="activePrefObj.fromHakata"></span>
+              </div>
+              <h3 class="font-serif-jp text-2xl font-medium text-[#1F1E1C] mt-1" x-text="activePrefObj.name"></h3>
+              <p class="text-xs text-[#6F6A62] mt-1 leading-relaxed" x-text="activePrefObj.vibe"></p>
+            </div>
+            <a :href="mapsUrl(activePrefObj.name)" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full border border-[#EAE6DF] text-[#6F6A62] hover:border-[#1F1E1C] hover:text-[#1F1E1C] shrink-0 transition" title="在 Google Maps 開啟">
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </a>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-[10px] tracking-[0.22em] uppercase text-[#8A847A]">MUST VISIT · 必去推薦</div>
+            <template x-for="sp in activePrefObj.spots" :key="sp.t">
+              <div class="p-3 rounded-xl bg-[#F9F8F6] border border-[#EAE6DF] flex items-start justify-between gap-2">
+                <div>
+                  <div class="font-serif-jp text-sm font-medium text-[#1F1E1C]" x-text="sp.t"></div>
+                  <div class="text-[11px] text-[#6F6A62] mt-0.5" x-text="sp.d"></div>
+                </div>
+                <a :href="mapsUrl(sp.t)" target="_blank" rel="noopener noreferrer" class="text-[11px] text-[#9E6B4F] hover:text-[#1F1E1C] shrink-0 mt-0.5">地圖↗</a>
+              </div>
+            </template>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-[10px] tracking-[0.22em] uppercase text-[#8A847A]">LOCAL FLAVORS · 特色美食</div>
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="f in activePrefObj.foods" :key="f">
+                <span class="px-3 py-1 rounded-full border border-[#EAE6DF] bg-white text-xs text-[#1F1E1C]" x-text="f"></span>
+              </template>
+            </div>
+          </div>
+
+          <button @click="toggleInspiration(activePrefObj)" class="w-full py-3 rounded-full text-xs tracking-[0.1em] font-medium flex items-center justify-center gap-2 transition border" :class="hasInspiration(activePrefObj.id)?'bg-[#4D6155] text-[#F9F8F6] border-[#4D6155]':'bg-[#1F1E1C] text-[#F9F8F6] border-[#1F1E1C] hover:bg-[#3A3834]'">
+            <i :data-lucide="hasInspiration(activePrefObj.id)?'check':'bookmark-plus'" class="w-4 h-4"></i>
+            <span x-text="hasInspiration(activePrefObj.id)?'已加入我的行程靈感清單（點擊移出）':'一鍵加入我的行程靈感清單'"></span>
+          </button>
+        </article>
+
+        <!-- 已收藏的靈感清單（可直接一鍵塞入目前編輯中的 Day） -->
+        <div class="bento rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase text-[#8A847A]">
+            <span>MY INSPIRATION LIST</span>
+            <span class="tabular-nums text-[#1F1E1C]" x-text="`${(state.inspirations||[]).length} 個區域`"></span>
+          </div>
+          <p x-show="!(state.inspirations||[]).length" class="text-xs text-[#8A847A]">尚未收藏靈感區域，點擊上方按鈕即可暫存跨縣市備選。</p>
+          <div class="space-y-2">
+            <template x-for="item in (state.inspirations||[])" :key="item.id">
+              <div class="p-2.5 rounded-xl bg-[#F9F8F6] border border-[#EAE6DF] flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0">
+                  <span class="font-serif-jp font-medium text-[#1F1E1C]" x-text="item.name"></span>
+                  <span class="text-[11px] text-[#8A847A] ml-1.5" x-text="item.fromHakata"></span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button @click="pushInspirationToDay(item)" class="px-2.5 py-1 rounded-full bg-white border border-[#EAE6DF] hover:border-[#1F1E1C] text-[11px]" x-text="`+ 排入 Day ${activeDay}`"></button>
+                  <button @click="toggleInspiration(item)" class="p-1 text-[#8A847A] hover:text-[#B35340]"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </section>
+<nav
+    aria-label="頁面切換導覽列"
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 p-1.5 rounded-full bg-white/80 backdrop-blur-xl border border-[#EAE6DF] shadow-[0_12px_32px_-8px_rgba(31,30,28,0.14)] flex items-center gap-1 no-print"
+  >
+    <button
+      @click="switchPage('home')"
+      class="px-4 sm:px-5 py-2.5 rounded-full text-xs tracking-[0.08em] font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap"
+      :class="currentPage === 'home' ? 'bg-[#1F1E1C] text-[#F9F8F6] shadow-sm' : 'text-[#6F6A62] hover:text-[#1F1E1C] hover:bg-[#F9F8F6]'"
+    >
+      <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+      <span>行程總覽</span>
+    </button>
+
+    <span class="w-[1px] h-4 bg-[#EAE6DF] mx-0.5"></span>
+
+    <button
+      @click="switchPage('map')"
+      class="px-4 sm:px-5 py-2.5 rounded-full text-xs tracking-[0.08em] font-medium flex items-center gap-2 transition-all duration-300 whitespace-nowrap"
+      :class="currentPage === 'map' ? 'bg-[#1F1E1C] text-[#F9F8F6] shadow-sm' : 'text-[#6F6A62] hover:text-[#1F1E1C] hover:bg-[#F9F8F6]'"
+    >
+      <i data-lucide="map" class="w-3.5 h-3.5"></i>
+      <span>探索九州地圖</span>
+    </button>
+  </nav>
+  <div class="fixed bottom-20 sm:bottom-5 right-5 z-50 space-y-2 pointer-events-none no-print">
+    <template x-for="t in toasts" :key="t.id"><div class="px-4 py-2 rounded-full bg-[#1F1E1C] text-[#F9F8F6] text-xs tracking-wide" x-text="t.msg"></div></template>
+  </div>
+
+  <script>
+    const STORE_KEY='fukuoka_kinfolk_2027_v4', TAX=500;
+    const tripData={
+      daysMeta:[
+        {day:1,date:'2027/04/24',w:'六',badge:'去程抵達日'},
+        {day:2,date:'2027/04/25',w:'日',badge:'唐戶市場週日限定'},
+        {day:3,date:'2027/04/26',w:'一',badge:'平日離峰'},
+        {day:4,date:'2027/04/27',w:'二',badge:'平日離峰'},
+        {day:5,date:'2027/04/28',w:'三',badge:'平日離峰'},
+        {day:6,date:'2027/04/29',w:'四',badge:'日本黃金週首日・留市區'},
+        {day:7,date:'2027/04/30',w:'五',badge:'台灣補假・返台'}
+      ],
+      flights:[
+        {id:'jx_itf',code:'JX840 / JX841',shortName:'星宇 JX840/841 (ITF)',price:13964,outTime:'09:35→13:05',inTime:'14:15→15:45',arr:'13:05',dep:'11:30',arrDesc:'星宇 JX840 13:05 抵福岡，約 14:30 抵飯店銜接入住',depDesc:'赴福岡機場國際線報到，搭星宇 JX841 14:15 返台',baggage:'每人 1 件 23kg 託運（雙人 2 件）＋ 7kg 手提 ＋ 機上餐',terminal:'桃園 T1 ➔ 福岡國際線 · 建議 11:45 前抵機場'},
+        {id:'ci_early',code:'CI110 / CI111',shortName:'華航 CI110/111 (早去早回)',price:14078,outTime:'06:50→09:55',inTime:'11:00→12:30',arr:'09:55',dep:'08:30',arrDesc:'華航 CI110 09:55 早班抵福岡，先寄放行李再逛',depDesc:'退房赴機場搭華航 CI111 11:00 返台',baggage:'每人 1 件 23kg 託運 ＋ 7kg 手提 ＋ 機上餐',terminal:'桃園 T2 ➔ 福岡國際線 · 08:30 出發赴機場'},
+        {id:'it_promo',code:'IT240 / IT721',shortName:'虎航 IT240/721 (早去晚回)',price:11000,outTime:'06:45→10:05',inTime:'19:00→20:25',arr:'10:05',dep:'16:15',arrDesc:'虎航 IT240 10:05 抵福岡，先寄放行李玩滿首日',depDesc:'領行李赴機場搭虎航 IT721 19:00 晚班返台',baggage:'計重不計件雙人共享（建議去共 20kg ＋ 回共 35–40kg）＋ 10kg 手提',terminal:'桃園 T1 ➔ 福岡國際線 · 16:30 前抵櫃檯'},
+        {id:'ci_low',code:'CI116 / CI111',shortName:'華航 CI116/111 (晚去早回)',price:13773,outTime:'16:40→20:00',inTime:'11:00→12:30',arr:'20:00',dep:'08:30',arrDesc:'華航 CI116 20:00 抵福岡，入住吃屋台宵夜',depDesc:'退房赴機場搭華航 CI111 11:00 返台',baggage:'每人 1 件 23kg 託運 ＋ 7kg 手提 ＋ 機上餐',terminal:'桃園 T2 ➔ 福岡國際線'},
+        {id:'br_mid',code:'BR102 / BR105',shortName:'長榮 BR102/105 (午去午回)',price:14883,outTime:'15:10→18:20',inTime:'12:20→13:45',arr:'18:20',dep:'09:45',arrDesc:'長榮 BR102 18:20 傍晚抵福岡，入住吃晚餐',depDesc:'退房赴機場搭長榮 BR105 12:20 返台',baggage:'每人 1 件 23kg 託運 ＋ 7kg 手提 ＋ 機上餐',terminal:'桃園 T2 ➔ 福岡國際線 · 09:45 出發赴機場'},
+        {id:'jx_norm',code:'JX840 / JX841',shortName:'星宇 JX840/841 (常態高價)',price:17438,outTime:'09:35→13:05',inTime:'14:15→15:45',arr:'13:05',dep:'11:30',arrDesc:'星宇 JX840 13:05 抵福岡，約 14:30 入住',depDesc:'赴機場搭星宇 JX841 14:15 返台',baggage:'每人 1 件 23kg 託運 ＋ 7kg 手提 ＋ 機上餐',terminal:'桃園 T1 ➔ 福岡國際線'}
+      ],
+      lugPlans:[{id:'none',short:'飯店免費',cost:0},{id:'fukusen',short:'福泉7F ¥500×4',cost:420},{id:'ecbo',short:'ecbo ¥800×4',cost:680}],
+      hotels:[
+        {id:'montan',name:'蒙坦博多旅舍 (montan HAKATA)',shortName:'蒙坦博多旅舍',area:'東比惠站 5 分 / 博多站 8 分',sqm:17,refPrice:20966,statusLabel:'可立即預訂',kitchen:'shared',kitchenTxt:'1F全套共用廚房',luggage:'free',luggageTxt:'07–24H免費寄放',laundry:'24H投幣洗烘',pros:'機場1站＋博多步行8分；煎肉油煙不進房',cons:'17㎡雙人房開兩大箱較緊湊；10:00退房',platforms:[{name:'官網',url:'https://www.montan.jp/en'},{name:'Google',url:'https://www.google.com/travel/search?q=montan+HAKATA'},{name:'Agoda',url:'https://www.agoda.com/zh-tw/search?text=montan+HAKATA&checkIn=2027-04-24&los=6&rooms=1&adults=2'}]},
+        {id:'dream_inn',name:'福岡夢想旅館 (Dream Inn Hakata)',shortName:'Dream Inn 博多',area:'博多站步行 10–12 分',sqm:30,refPrice:18500,statusLabel:'估1月放房(早鳥預估)',kitchen:'private',kitchenTxt:'房內私人瓦斯爐廚房',luggage:'partial',luggageTxt:'09–22H中文櫃檯免費',laundry:'房內獨立洗衣機',pros:'30㎡超大空間輕鬆全開兩箱；私人廚房＋洗衣機',cons:'尚未開賣2027/4月底；部分住客反映隔音普通',platforms:[{name:'Agoda',url:'https://www.agoda.com/zh-tw/oyo-dream-inn-hakata/hotel/fukuoka-jp.html'},{name:'Google',url:'https://www.google.com/travel/search?q=Dream+Inn+Hakata'}]},
+        {id:'randor',name:'住宅飯店 RANDOR 福岡',shortName:'RANDOR 福岡公寓',area:'渡邊通站 6 分（七隈線 2 站博多）',sqm:28,refPrice:18883,statusLabel:'可立即預訂',kitchen:'private',kitchenTxt:'房內簡易廚房與冰箱',luggage:'partial',luggageTxt:'依方案確認/可搭外寄',laundry:'館內/房內洗衣',pros:'實查$18,883省$2,100；28㎡大浴缸；近24H超市',cons:'赴機場需於博多站轉乘一次地鐵',platforms:[{name:'官網',url:'https://randor-residential-fukuoka.hotels-fukuoka.com/en/'},{name:'Google',url:'https://www.google.com/travel/search?q=Randor+Residential+Hotel+Fukuoka'}]},
+        {id:'residence',name:'博多無人公寓 (Residence Hakata Stn 2)',shortName:'博多無人公寓',area:'博多站周邊步行圈',sqm:25,refPrice:20432,statusLabel:'可預訂(1月追低價)',kitchen:'private',kitchenTxt:'房內私人完整廚房',luggage:'no',luggageTxt:'無人無寄放(搭外寄)',laundry:'房內獨立洗衣機',pros:'高度隱私寬敞；搭筑紫口¥500寄物僅多$420',cons:'完全無櫃檯寄放，自助Check-in須先收密碼',platforms:[{name:'Google',url:'https://www.google.com/travel/search?q=Residence+Hotel+Hakata+Station+2'},{name:'Agoda',url:'https://www.agoda.com/zh-tw/search?text=Residence+Hotel+Hakata&checkIn=2027-04-24&los=6&rooms=1&adults=2'}]},
+        {id:'tokyu',name:'東急 STAY 博多 (Tokyu Stay Hakata)',shortName:'東急 STAY 博多',area:'博多筑紫口 7 分（經 LOPIA）',sqm:24,refPrice:26532,statusLabel:'超預算(住宅房$30k+)',kitchen:'partial',kitchenTxt:'限Residential住宅房IH爐',luggage:'free',luggageTxt:'24H櫃檯免費寄放',laundry:'全室洗脫烘衣機',pros:'連鎖管理極佳＋房內洗脫烘＋經LOPIA超市',cons:'入門無廚房房已破$26,500，超出預算',platforms:[{name:'官網',url:'https://www.tokyustay.co.jp/chn_tc/hotel/HT/'},{name:'Google',url:'https://www.google.com/travel/search?q=Tokyu+Stay+Hakata'}]},
+        {id:'crosslife',name:'Cross Life 博多柳橋',shortName:'Cross Life 柳橋',area:'渡邊通站 4 分（對面 24H 超市）',sqm:18,refPrice:16844,statusLabel:'可預訂(升雙床$19.5k)',kitchen:'no',kitchenTxt:'無廚房(僅微波爐)',luggage:'free',luggageTxt:'大廳免費寄放(11時退)',laundry:'密碼鎖洗烘投幣',pros:'2022底最新最乾淨；有預算餘裕升20㎡雙床',cons:'不能開火煎肉；赴機場須在博多轉乘',platforms:[{name:'官網',url:'https://crosslife-hakatayanagibashi.orixhotelsandresorts.com/'},{name:'Google',url:'https://www.google.com/travel/search?q=Cross+Life+Hakata+Yanagibashi'}]},
+        {id:'viainn',name:'Via Inn 博多口站前',shortName:'Via Inn 博多口',area:'JR 博多口步行 3–4 分',sqm:15,refPrice:18355,statusLabel:'可預訂(升21㎡$21k)',kitchen:'no',kitchenTxt:'無廚房(僅微波爐)',luggage:'free',luggageTxt:'24H櫃檯免費寄放',laundry:'2F密碼鎖洗烘合一',pros:'博多口4分黃金位免轉車；21㎡雙床可攤兩大箱',cons:'不能開火；基礎15㎡偏小須加價升級',platforms:[{name:'官網',url:'https://www.viainn.com/hakata-h/'},{name:'Google',url:'https://www.google.com/travel/search?q=Via+Inn+Hakataekimae'}]},
+        {id:'prezio',name:'靜鐵飯店 Prezio 博多站前',shortName:'靜鐵 Prezio 博多',area:'JR 博多口步行 5–6 分',sqm:18,refPrice:20886,statusLabel:'可立即預訂',kitchen:'no',kitchenTxt:'無廚房(僅微波爐)',luggage:'free',luggageTxt:'24H免費寄放常送房',laundry:'館內投幣洗衣房',pros:'全室浴廁分離、11:00退房、服務細緻免轉車',cons:'不能開火；入門已近$21,000難升雙床',platforms:[{name:'官網',url:'https://www.hotel-prezio.co.jp/'},{name:'Google',url:'https://www.google.com/travel/search?q=Shizutetsu+Hotel+Prezio+Hakataekimae'}]}
+      ],
+      foods:[
+        {id:'motsunabe',short:'牛腸鍋',name:'博多牛腸鍋 (おおやま/樂天地)',day:1,time:'19:00',note:'建議提前訂位，味噌或醬油湯底最後煮雜炊'},
+        {id:'yatai',short:'屋台',name:'中洲／天神屋台宵夜',day:1,time:'21:00',note:'天神屋台標價透明，點關東煮與烤明太子串'},
+        {id:'karato',short:'唐戶壽司',name:'下關唐戶市場壽司 (週日限定)',day:2,time:'11:00',note:'活跳跳馬關街河豚生魚片與大腹鮪魚壽司必吃'},
+        {id:'baked_curry',short:'燒咖哩',name:'門司港燒咖哩 (Bear Fruits)',day:2,time:'14:00',note:'烤起司與半熟蛋香氣十足，門司港代表名物'},
+        {id:'ramen',short:'豚骨拉麵',name:'博多豚骨拉麵 (ShinShin/一雙)',day:3,time:'19:30',note:'一雙泡沫系濃郁、ShinShin清爽順口'},
+        {id:'unagi',short:'柳川鰻魚',name:'柳川蒸籠鰻魚飯 (本吉屋/若松屋)',day:4,time:'12:30',note:'柳川遊船下船後享用炭烤蒸籠鰻魚'},
+        {id:'mizutaki',short:'水炊雞',name:'博多水炊雞 (華味鳥/橙/長野)',day:5,time:'18:30',note:'濃醇雞白湯沾柚子胡椒，最後收尾雜炊'},
+        {id:'mentaiko',short:'明太重',name:'元祖博多明太重早午餐',day:6,time:'10:30',note:'07:00早開避開正午排隊，烤明太子配特製沾麵'},
+        {id:'wagyu_cook',short:'自煮和牛',name:'超市買日本黑毛和牛回飯店自煮',day:6,time:'19:30',note:'於 LOPIA 或 24H Sunny 買和牛燒肉片回宿開火現煎！',kitchen:true}
+      ],
+      themes:{
+        fukuoka_arrival:{label:'福岡市區適應＋博多舊城運河城',cost:150,items:[{time:'15:30',category:'景點',title:'櫛田神社參拜＋川端通商店街',note:'欣賞巨大裝飾山笠，漫步懷舊商店街'},{time:'17:00',category:'購物',title:'博多運河城 (Canal City) 逛街與水舞',note:'動漫專賣店、Uniqlo 與整點水舞'}]},
+        mojiko_karato:{label:'門司港懷舊區＋下關唐戶市場＋小倉',cost:950,items:[{time:'08:30',category:'交通',title:'博多搭 JR 特急音速至小倉轉門司港',note:'山陽新幹線不適用 JR 九州 Pass，改搭特急約 50 分'},{time:'10:15',category:'景點',title:'搭關門連絡船赴下關唐戶市場',note:'船程 5 分鐘，早點到避開正午團客人潮'},{time:'13:30',category:'景點',title:'關門海峽海底隧道＆門司港懷舊建築',note:'散步跨縣海底隧道，看藍翼橋開合'},{time:'16:30',category:'購物',title:'小倉城外觀＆魚町銀天街返博多',note:'約 19:00 輕鬆回到博多站'}]},
+        uminonakamichi:{label:'海之中道粉蝶花海＋海洋世界水族館',cost:900,items:[{time:'09:30',category:'交通',title:'博多埠頭搭渡輪直達海之中道',note:'船程約 20 分鐘吹海風直達最悠閒'},{time:'10:15',category:'景點',title:'海之中道海濱公園：租單車賞粉蝶花海',note:'4 月下旬粉蝶花盛開如藍色地毯，園區平坦好騎'},{time:'14:00',category:'景點',title:'海洋世界海之中道水族館',note:'必看海豚海獅秀與壯觀九州外洋大水槽'}]},
+        dazaifu_yanagawa:{label:'太宰府天滿宮＋柳川遊船 (西鐵套票)',cost:740,items:[{time:'09:30',category:'交通',title:'西鐵天神站買套票搭特急往柳川',note:'觀光套票含車資與船票約 ¥3,500 最划算'},{time:'10:45',category:'景點',title:'柳川護城河悠閒遊船 (60分鐘)',note:'船夫吟唱民謠穿越水門，氛圍療癒'},{time:'14:30',category:'景點',title:'太宰府天滿宮＆隈研吾木構星巴克',note:'品嚐現烤梅枝餅，17:30 輕鬆返市區'}]},
+        itoshima_drive:{label:'糸島海岸看海放空 (單日自駕)',cost:2250,items:[{time:'09:00',category:'交通',title:'博多站旁租車出發赴糸島 (50分)',note:'早取晚還免停車費，兩人平分約 $2,250/人'},{time:'10:30',category:'景點',title:'櫻井二見浦夫婦岩白鳥居＆海景咖啡',note:'沿海公路開闊好開，沒有艱難山路'},{time:'14:00',category:'景點',title:'龍貓森林步道、椰子樹鞦韆與白絲瀑布',note:'順逛郊區超市補貨後返博多還車'}]},
+        tour_yufuin:{label:'旅行社一日遊：由布院＋別府海地獄',cost:1450,items:[{time:'08:15',category:'交通',title:'博多筑紫口集合搭一日遊專車',note:'免搶由布院之森車票，車上補眠直達門口'},{time:'10:30',category:'景點',title:'由布院湯之坪街道＆金鱗湖散策',note:'停留約 3 小時吃金賞可樂餅與起司蛋糕'},{time:'14:30',category:'景點',title:'別府海地獄 (或九州自然動物園)',note:'團車免排停車位，約 18:30 返抵博多站'}]},
+        tour_aso:{label:'旅行社一日遊：阿蘇火山＋草千里＋熊本城',cost:1550,items:[{time:'08:00',category:'交通',title:'博多集合搭專車前往熊本與阿蘇',note:'兩人跟團比自駕省 $1,400+ 且免開山路'},{time:'10:00',category:'景點',title:'熊本城天守閣＆櫻之馬場城彩苑',note:'登城俯瞰市景，吃海膽可樂餅'},{time:'13:30',category:'景點',title:'阿蘇中岳火山口＆草千里之濱',note:'4 月底草原翠綠開闊，約 18:45 返博多'}]},
+        jr_kumamoto:{label:'JR 新幹線：熊本城＋上下通一日遊',cost:2200,items:[{time:'09:00',category:'交通',title:'博多搭九州新幹線 35 分直達熊本',note:'轉熊本市電直達城下，當天來回超輕鬆'},{time:'10:00',category:'景點',title:'熊本城天守閣＋水前寺成趣園',note:'順訪熊本熊部長辦公室'},{time:'16:30',category:'購物',title:'上下通吃勝烈亭厚切豬排返博多',note:'晚上 20:00 前輕鬆回到飯店'}]},
+        jr_nagasaki:{label:'JR 西九州新幹線：長崎眼鏡橋＋稻佐山',cost:2500,items:[{time:'08:30',category:'交通',title:'博多搭接力海鷗轉西九州新幹線',note:'武雄溫泉同月台無縫轉乘，單程 1.5 小時'},{time:'10:30',category:'景點',title:'長崎平和公園 → 眼鏡橋尋愛心石',note:'吃長崎強棒麵與福砂屋蜂蜜蛋糕'},{time:'15:00',category:'景點',title:'哥拉巴園＆稻佐山世界新三大夜景',note:'搭纜車賞百萬夜景後返博多'}]},
+        tenjin_lalaport:{label:'天神商圈＋大濠公園＋LaLaport鋼彈＋LOPIA',cost:170,items:[{time:'09:30',category:'景點',title:'大濠公園湖畔咖啡＋舞鶴公園散步',note:'黃金週首日留市區避開跨縣大塞車'},{time:'12:30',category:'購物',title:'天神地下街、岩田屋與藥妝採買',note:'一次把伴手禮與免稅藥妝補齊'},{time:'16:00',category:'購物',title:'LaLaport 1:1 實體鋼彈＋LOPIA 超市',note:'看整點鋼彈秀並掃黑毛和牛回去煎'}]},
+        departure_day:{label:'最後收尾採買 → 福岡機場返台',cost:180,items:[{time:'09:30',category:'住宿',title:'整理行李退房 (必要時暫存行李)',note:'確認護照、免稅封袋與液體託運'},{time:'10:15',category:'購物',title:'博多站地下街最後掃貨',note:'買明太子法國麵包、努努雞與福砂屋'}]}
+      },
+      lockers:[
+        {name:'博多站 阪急/AMU No.3 Space R',price:'¥400/次',cost4:336,hours:'車站營運內',tag:'全站最省',dist:'博多口直結',desc:'全站最便宜大型櫃但僅 12 個，9 點後易滿。'},
+        {name:'博多筑紫口 福泉第一大樓 7F 預約寄物',price:'¥500/日',cost4:420,hours:'09:00–18:00(可預約)',tag:'最推省錢保底',dist:'筑紫口步行 3 分',desc:'不限尺寸一律 ¥500 且可提前線上預約保證有位。'},
+        {name:'博多 O1O1 (丸井百貨) 2F TABINAKA',price:'¥500起/日',cost4:420,hours:'10:00–21:00',tag:'博多口極近',dist:'博多口步行 1 分',desc:'出地鐵即達、開到 21:00，適合晚回航班。'},
+        {name:'博多站 3F 改札口旁大型置物櫃',price:'¥600/次',cost4:504,hours:'車站營運內',tag:'空位較多',dist:'博多站 3F',desc:'共 63 個大型櫃，比 1F ¥700–900 櫃更划算。'},
+        {name:'ecbo cloak 博多合作店 (Big Echo/7-11)',price:'¥800/日',cost4:672,hours:'部分 24H/深夜(預約)',tag:'黃金週最穩',dist:'博多站 1–5 分',desc:'100% 保留位子，連假滿櫃時最安心。',url:'https://cloak.ecbo.io/zh-TW/jpn/city/fukuoka/79'}
+      ],
+      markets:[
+        {name:'友都八喜 B2 LOPIA 超市 (博多筑紫口)',walk:'筑紫口 3 分 / 蒙坦 6 分',hours:'10:00–20:00',badge:'和牛首選',desc:'肉品專賣起家，日本國產黑毛和牛燒肉片、厚切牛排與壽司極超值。',tip:'以現金支付為主，請備妥日圓現金與購物袋。'},
+        {name:'渡邊通 24H Sunny 超市',walk:'Cross Life 對面 / RANDOR 5 分',hours:'24 小時營業',badge:'半夜可買',desc:'九州親民大型超市，20:00 後常有半價貼標生鮮與熟食。',tip:'支援信用卡與電子支付，晚歸採買首選。'},
+        {name:'Reganet Cute (博多站周邊)',walk:'JR 博多站內 2 分',hours:'07:00–22:00',badge:'轉車順買',desc:'小家庭份量九州豬肉片、明太子、草莓與牛奶，兩人不浪費。',tip:'搭 JR 回來順手提回飯店最省腳力。'},
+        {name:'LaLaport 福岡 1F LOPIA 超市',walk:'竹下站 9 分 / 博多直達公車 20 分',hours:'10:00–21:00',badge:'巨型賣場',desc:'賣場比站前更大，看 1:1 鋼彈後順手掃和牛與水果回宿開火。',tip:'建議排在 Day 6 黃金週市區採買日。'}
+      ],
+      guides:[
+        {k:/櫛田|運河城|川端/,dur:'地鐵 12 分',transit:'七隈線「櫛田神社前站」步行 3 分',tip:'櫛田神社後方石燈籠光影靜謐；川端通老店「川端善哉」紅豆湯配烤麻糬必吃。'},
+        {k:/門司港|唐戶|小倉|燒咖哩/,dur:'JR 65 分',transit:'JR 特急音速至小倉轉門司港＋連絡船 5 分',tip:'唐戶市場買完壽司帶至海濱木棧道拍關門大橋；門司港展望室 31F 俯瞰海峽最開闊。'},
+        {k:/海之中道|水族館|粉蝶花/,dur:'渡輪 35 分',transit:'博多埠頭搭市營渡輪 20 分直達碼頭',tip:'上午 10:30 前抵「花之丘」低角度拍藍色粉蝶花海；租電動腳踏車最省體力。'},
+        {k:/太宰府|柳川|鰻魚/,dur:'西鐵 50 分',transit:'西鐵天神站購太宰府・柳川觀光套票直達',tip:'表參道「かさの家」現烤梅枝餅趁熱吃；隈研吾星巴克清晨與傍晚木構光影最佳。'},
+        {k:/糸島|夫婦岩|白絲/,dur:'自駕 50 分',transit:'博多站取車走都市高速接西九州道',tip:'夫婦岩白色鳥居上午順光最藍；順路赴「またいちの塩」品嚐焦糖花鹽布丁。'},
+        {k:/由布院|別府|動物園/,dur:'專車 110 分',transit:'博多站筑紫口集合搭一日遊專車直達',tip:'金鱗湖於「天祖神社」湖畔側邊拍鳥居倒影；Milch 必點現烤熱半熟起司塔。'},
+        {k:/阿蘇|熊本|城彩苑|上下通/,dur:'新幹線 40 分',transit:'九州新幹線直達熊本轉市電，或博多一日團',tip:'熊本城 6F 遠眺阿蘇群山；上下通「勝烈亭」六白黑豬排與城彩苑海膽可樂餅必吃。'},
+        {k:/長崎|眼鏡橋|稻佐山/,dur:'新幹線 90 分',transit:'接力海鷗號於武雄溫泉同月台轉西九州新幹線',tip:'眼鏡橋河堤藏有愛心石；稻佐山建議日落前 30 分上山，一次收下藍調與百萬夜景。'},
+        {k:/天神|大濠|LaLaport|LOPIA|和牛/,dur:'地鐵 18 分',transit:'空港線至大濠公園/天神；博多巴士總站直達 LaLaport',tip:'大濠公園「&LOCALS」八女茶極具京都感；LaLaport 1:1 鋼彈 19:00 後有燈光秀。'},
+        {k:/機場|退房|博多站地下街|掃貨/,dur:'地鐵 15 分',transit:'地鐵空港線 2 站轉接駁車，或筑紫口計程車 15 分直達',tip:'博多站「Full Full」明太子法國麵包每 20 分出爐；「努努雞」冰鎮炸雞極受歡迎。'},
+        {k:/牛腸鍋|水炊雞|明太子|屋台|拉麵/,dur:'地鐵 12 分',transit:'博多站／中洲川端／天神地鐵直達',tip:'元祖博多明太重 07:00 開門當早午餐免排隊；博多一雙建議離峰 15:00 入座。'}
+      ]
+    };
+const KYUSHU_MAP=[
+      {id:'fukuoka',short:'福岡',name:'福岡・博多 / 門司港',en:'FUKUOKA',pts:'142,32 222,26 234,74 196,112 146,110 134,74',lx:182,ly:72,fromHakata:'核心據點 · 0–50分',tags:['和牛自煮','粉蝶花海','屋台文化'],vibe:'機場 5 分鐘進城，兼具城市選物、海濱花海與門司港懷舊海風。',spots:[{t:'海之中道海濱公園',d:'4月下旬藍色粉蝶花盛開，租單車最愜意'},{t:'門司港懷舊區＆唐戶市場',d:'週日限定河豚與大腹壽司，JR特急50分直達'},{t:'太宰府天滿宮＆柳川遊船',d:'西鐵套票一次收齊神社建築與水鄉遊船'}],foods:['博多牛腸鍋','水炊雞','LOPIA 黑毛和牛','明太子重']},
+      {id:'saga',short:'佐賀',name:'佐賀・武雄 / 有田',en:'SAGA',pts:'82,78 126,76 138,112 118,140 76,130',lx:108,ly:109,fromHakata:'JR 特急約 45 分',tags:['建築圖書館','白瓷工藝','秘境溫泉'],vibe:'低調清幽的器皿與建築之縣，適合想避開黃金週人潮的慢旅日。',spots:[{t:'武雄市圖書館',d:'蔦屋書店操刀木質光影空間，順泡武雄溫泉'},{t:'祐德稻荷神社',d:'日本三大稻荷，朱紅舞台式本殿極壯觀'},{t:'有田陶瓷町',d:'百年白瓷工坊與選物咖啡廳散步'}],foods:['佐賀和牛燒肉','呼子活花枝','嬉野溫泉湯豆腐']},
+      {id:'nagasaki',short:'長崎',name:'長崎・港都 / 稻佐山',en:'NAGASAKI',pts:'34,114 70,132 108,148 96,204 54,206 28,164',lx:67,ly:165,fromHakata:'西九州新幹線 1.5H',tags:['異國洋館','百萬夜景','海港坡道'],vibe:'交融荷蘭與唐人文化的海港山城，黃昏至入夜的藍調景色最迷人。',spots:[{t:'稻佐山展望台',d:'世界新三大夜景，建議日落前 30 分上山'},{t:'哥拉巴園＆大浦天主堂',d:'俯瞰長崎港的百年西洋建築與花園'},{t:'眼鏡橋石堤',d:'中島川倒影雙圓與尋找河岸愛心石'}],foods:['福砂屋蜂蜜蛋糕','長崎強棒麵','岩崎本舖角煮刈包']},
+      {id:'oita',short:'大分',name:'大分・由布院 / 別府',en:'OITA',pts:'242,78 294,86 312,140 272,182 222,168 204,116',lx:258,ly:130,fromHakata:'一日遊專車 / 特急 2H',tags:['晨霧溫泉','山城散策','地獄湧泉'],vibe:'日本第一湧泉縣，由布岳下的溫泉小鎮與別府煙霧極具療癒感。',spots:[{t:'由布院湯之坪＆金鱗湖',d:'雜貨甜點林立，湖畔天祖神社倒影必拍'},{t:'別府海地獄',d:'鈷藍色溫泉湧池與熱騰騰溫泉蒸布丁'},{t:'九州自然動物園',d:'搭叢林巴士近距離餵食獅子與長頸鹿'}],foods:['金賞可樂餅','Milch 熱起司塔','地獄蒸料理']},
+      {id:'kumamoto',short:'熊本',name:'熊本・阿蘇 / 熊本城',en:'KUMAMOTO',pts:'124,146 196,120 214,172 206,244 146,260 112,214',lx:166,ly:194,fromHakata:'新幹線 35 分 / 一日團',tags:['阿蘇火山','名城歷史','翠綠草原'],vibe:'搭新幹線半小時可抵名城，向東延伸即是世界級阿蘇破火山口大草原。',spots:[{t:'阿蘇草千里＆中岳火山口',d:'4月底草原轉綠視野開闊，建議報博多一日團'},{t:'熊本城＆櫻之馬場城彩苑',d:'登天守閣眺望群山，城下品嚐在地小吃'},{t:'水前寺成趣園',d:'精緻回遊式日式庭園配抹茶點心'}],foods:['勝烈亭六白黑豬排','天草海膽可樂餅','阿蘇鮮乳霜淇淋']},
+      {id:'miyazaki',short:'宮崎',name:'宮崎・高千穗 / 日南',en:'MIYAZAKI',pts:'222,176 274,190 290,248 256,320 210,308 214,248',lx:247,ly:248,fromHakata:'適合串聯一日團 / 延伸',tags:['神話峽谷','南國海岸','陽光秘境'],vibe:'充滿神話色彩的柱狀玄武岩峽谷與太平洋蔚藍海岸。',spots:[{t:'高千穗峽',d:'真名井瀑布下划小船，日本神話原鄉（可跟一日團）'},{t:'鵜戶神宮',d:'建於臨海海蝕洞內的朱紅神社'},{t:'青島神社',d:'奇岩「鬼之洗衣板」環繞的熱帶島嶼神社'}],foods:['宮崎炭火地雞','元祖南蠻炸雞','宮崎完熟芒果']},
+      {id:'kagoshima',short:'鹿兒島',name:'鹿兒島・櫻島 / 仙巖園',en:'KAGOSHIMA',pts:'116,268 150,268 206,252 202,314 234,344 196,392 162,364 130,384 102,326',lx:162,ly:325,fromHakata:'九州新幹線 1.5H',tags:['活火山島','薩摩黑豚','南九州海灣'],vibe:'隔著錦江灣與冒煙櫻島火山對望，豪邁又溫暖的南國港口城市。',spots:[{t:'櫻島渡輪＆湯之平展望台',d:'15分鐘渡輪登活火山島，泡海景免費足湯'},{t:'仙巖園',d:'以櫻島為天然借景的島津藩主大名庭園'},{t:'霧島神宮',d:'隱身老杉森林中的國寶級朱紅社殿'}],foods:['薩摩六白黑豬涮涮鍋','天文館白熊冰','兩棒餅']}
+    ];
+
+
+    window.kinfolkApp=function(){
+      const uid=()=>'k'+Math.random().toString(36).slice(2,8);
+      const sortT=a=>[...a].sort((x,y)=>(x.time||'99:99').localeCompare(y.time||'99:99'));
+      const buildDay=(dn,tk,fl)=>{
+        const arr=[];
+        if(dn===1&&fl) arr.push({id:'f_arr',time:fl.arr,category:'交通',title:'抵達福岡機場 → 前往飯店',note:fl.arrDesc,flight:'arr'});
+        (tripData.themes[tk]||tripData.themes.fukuoka_arrival).items.forEach((x,i)=>arr.push({id:`d${dn}_${tk}_${i}`,...x}));
+        if(dn===7&&fl) arr.push({id:'f_dep',time:fl.dep,category:'交通',title:'前往福岡機場國際線報到返台',note:fl.depDesc,flight:'dep'});
+        return sortT(arr);
+      };
+      const makePreset=(type,fl)=>{
+        const tks=type==='jr5'?['fukuoka_arrival','mojiko_karato','tour_yufuin','jr_kumamoto','jr_nagasaki','tenjin_lalaport','departure_day']:['fukuoka_arrival','mojiko_karato','uminonakamichi','dazaifu_yanagawa','tour_yufuin','tenjin_lalaport','departure_day'];
+        const fMap=type==='jr5'?{motsunabe:1,karato:2,baked_curry:2,ramen:3,mizutaki:4,wagyu_cook:6,mentaiko:6}:{motsunabe:1,yatai:1,karato:2,baked_curry:2,ramen:3,unagi:4,mizutaki:5,wagyu_cook:6,mentaiko:6};
+        const days=tks.map((tk,i)=>{
+          const items=buildDay(i+1,tk,fl);
+          Object.entries(fMap).forEach(([fid,dn])=>{if(dn===i+1){const f=tripData.foods.find(x=>x.id===fid);if(f)items.push({id:`food_${fid}`,time:f.time,category:'美食',title:f.name,note:f.note,foodId:fid});}});
+          return {day:i+1,themeKey:tk,transportCost:tripData.themes[tk].cost,items:sortT(items)};
+        });
+        return {days,fMap};
+      };
+      const defState=()=>{
+        const fl=tripData.flights[0],p=makePreset('relaxed',fl),prices={},lugs={};
+        tripData.hotels.forEach(h=>{prices[h.id]=h.refPrice;lugs[h.id]=h.luggage==='no'?'fukusen':'none';});
+        return {tab:'itinerary',flightId:fl.id,flightPrice:fl.price,hotelId:'montan',hotelPrices:prices,hotelLugs:lugs,days:p.days,checkedFoods:p.fMap,done:[],fxRate:0.21,expenses:[]};
+      };
+      const load=()=>{const d=defState();try{const r=JSON.parse(localStorage.getItem(STORE_KEY)||'null');return r?{...d,...r,hotelPrices:{...d.hotelPrices,...(r.hotelPrices||{})},hotelLugs:{...d.hotelLugs,...(r.hotelLugs||{})}}:d;}catch(e){return d;}};
+      return {
+        TABS:[{id:'itinerary',label:'行程手冊'},{id:'hotels',label:'八間旅宿'},{id:'guide',label:'寄物超市'},{id:'budget',label:'旅費換算'}],
+        tripData,state:load(),currentPage:'home',activeDay:1,openId:null,passFlipped:false,cd:{d:'000',h:'00',m:'00',s:'00'},toasts:[],
+        dragIdx:null,dragItem:null,dragOverIdx:null,dragOverDay:null,
+        hf:{k:false,l:false,s:false,max:35000},newItem:{time:'15:00',category:'景點',title:'',note:''},
+        fxJpy:5000,fxTwd:1050,exp:{name:'',cur:'JPY',amt:''},
+KYUSHU_MAP, activePref:'fukuoka', hoverPref:null,
+        init(){if(!Array.isArray(this.state.inspirations)) this.state.inspirations=[];
+        ['state.tab','currentPage','activePref','openId','passFlipped'].forEach(k=>this.$watch(k,()=>this.refreshIcons()));
+          this.tick();setInterval(()=>this.tick(),1000);this.syncJpy();
+          ['state.tab','currentPage','openId','passFlipped'].forEach(k=>this.$watch(k,()=>this.refreshIcons()));
+          this.refreshIcons();this.$nextTick(()=>this.animateDay());
+        },
+        refreshIcons(){this.$nextTick(()=>window.lucide&&lucide.createIcons());},
+        save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(this.state));}catch(e){}this.refreshIcons();},
+        fmt:n=>'NT$'+(Math.round(Number(n)||0)).toLocaleString('zh-TW'),
+        mapsUrl:q=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((/小倉|門司|唐戶|下關|柳川|太宰府|糸島|由布院|別府|熊本|阿蘇|長崎/.test(q)?'日本 ':'福岡 ')+q)}`,
+        toast(msg){const id=uid();this.toasts.push({id,msg});setTimeout(()=>this.toasts=this.toasts.filter(x=>x.id!==id),2200);},
+        tick(){const diff=Math.max(0,new Date('2027-04-24T09:35:00+08:00')-new Date());this.cd={d:String(Math.floor(diff/86400000)),h:String(Math.floor(diff%86400000/3600000)).padStart(2,'0'),m:String(Math.floor(diff%3600000/60000)).padStart(2,'0'),s:String(Math.floor(diff%60000/1000)).padStart(2,'0')};},
+        animateDay(){this.$nextTick(()=>{this.refreshIcons();if(window.gsap){gsap.fromTo('.day-item',{y:12,opacity:0},{y:0,opacity:1,duration:.45,stagger:.045,ease:'power2.out',clearProps:'transform'});}});},
+        setTab(t){this.currentPage='home';this.state.tab=t;this.save();if(t==='itinerary')this.animateDay();},
+switchPage(p){this.currentPage=p;this.refreshIcons();window.scrollTo({top:0,behavior:'smooth'});if(p==='home'&&this.state.tab==='itinerary')this.animateDay();},
+        switchDay(d){this.activeDay=d;this.openId=null;this.animateDay();},
+        get selectedFlight(){return tripData.flights.find(f=>f.id===this.state.flightId)||tripData.flights[0];},
+        get selectedHotel(){return tripData.hotels.find(h=>h.id===this.state.hotelId)||tripData.hotels[0];},
+        calcHotel(h){const r6=Math.max(0,Number(this.state.hotelPrices[h.id]??h.refPrice)||0),lp=tripData.lugPlans.find(x=>x.id===this.state.hotelLugs[h.id])||tripData.lugPlans[0],td=r6+TAX+lp.cost,fp=Math.max(0,Number(this.state.flightPrice)||0);return {h,room6N:r6,lugCost:lp.cost,totalDouble:td,fhPerPerson:fp+Math.round(td/2),fhDouble:fp*2+td};},
+        get coreCalc(){return this.calcHotel(this.selectedHotel);},
+        get currentMeta(){return tripData.daysMeta[this.activeDay-1];},
+        get currentDay(){return this.state.days[this.activeDay-1];},
+        get filteredHotels(){return tripData.hotels.map(h=>this.calcHotel(h)).filter(c=>(!this.hf.k||c.h.kitchen!=='no')&&(!this.hf.l||c.h.luggage!=='no')&&(!this.hf.s||c.h.sqm>=20)&&c.totalDouble<=this.hf.max);},
+        get wagyuWarning(){return this.state.checkedFoods.wagyu_cook&&this.selectedHotel.kitchen==='no'?`已安排「自煮和牛」，但鎖定的 ${this.selectedHotel.shortName} 不能開火，建議切換為蒙坦博多、Dream Inn 或 RANDOR。`:'';},
+        get progress(){let t=0,dn=0;this.state.days.forEach(d=>{t+=d.items.length;dn+=d.items.filter(x=>this.isDone(x.id)).length;});return {total:t,done:dn,pct:t?Math.round(dn/t*100):0};},
+        get totalTransport(){return this.state.days.reduce((s,d)=>s+(Number(d.transportCost)||0),0);},
+        get ledgerTwd(){return this.state.expenses.reduce((s,e)=>s+(e.cur==='JPY'?e.amt*(Number(this.state.fxRate)||.21):e.amt),0);},
+        isDone(id){return this.state.done.includes(id);},
+        toggleDone(id){this.state.done=this.isDone(id)?this.state.done.filter(x=>x!==id):[...this.state.done,id];this.save();},
+        getGuide(it){return tripData.guides.find(x=>x.k.test(it.title+(it.note||'')))||{dur:'地鐵 15 分',transit:'由博多站搭地鐵空港線／七隈線出發',tip:'建議錯開正午尖峰時段入場，周邊博多站地下街與超市皆可順路採買。'};},
+        onDragStart(idx,it,e){this.dragIdx=idx;this.dragItem=it;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',it.id);},
+        onDropItem(targetIdx){
+          if(this.dragIdx===null||this.dragIdx===targetIdx)return this.onDragEnd();
+          const list=this.currentDay.items;const [moved]=list.splice(this.dragIdx,1);list.splice(targetIdx,0,moved);
+          this.onDragEnd();this.save();this.toast('已更新行程順序');
+        },
+        dropOnDay(targetDay){
+          if(this.dragIdx===null||targetDay===this.activeDay)return this.onDragEnd();
+          const [moved]=this.currentDay.items.splice(this.dragIdx,1);
+          this.state.days[targetDay-1].items.push(moved);
+          if(moved.foodId) this.state.checkedFoods[moved.foodId]=targetDay;
+          this.onDragEnd();this.save();this.toast(`已移動「${moved.title}」至 Day ${targetDay}`);
+        },
+        onDragEnd(){this.dragIdx=null;this.dragItem=null;this.dragOverIdx=null;this.dragOverDay=null;},
+        moveStep(idx,dir){const a=this.currentDay.items,t=idx+dir;if(t<0||t>=a.length)return;[a[idx],a[t]]=[a[t],a[idx]];this.save();},
+        onFlightChange(){
+          const fl=this.selectedFlight;this.state.flightPrice=fl.price;
+          const upd=(dn,k,t,title,note)=>{const d=this.state.days[dn-1],i=d.items.findIndex(x=>x.flight===k);const o={id:i>=0?d.items[i].id:uid(),time:t,category:'交通',title,note,flight:k};if(i>=0)d.items[i]=o;else d.items.push(o);};
+          upd(1,'arr',fl.arr,'抵達福岡機場 → 前往飯店',fl.arrDesc);upd(7,'dep',fl.dep,'前往福岡機場國際線報到返台',fl.depDesc);
+          this.save();this.toast(`已切換 ${fl.shortName}`);
+        },
+        applyPreset(type){const p=makePreset(type,this.selectedFlight);this.state.days=p.days;this.state.checkedFoods=p.fMap;this.save();this.animateDay();this.toast(type==='jr5'?'已套用 JR 5日經典版':'已套用不累慢遊版');},
+        changeTheme(dn,tk){const d=this.state.days[dn-1],foods=d.items.filter(x=>x.foodId);d.themeKey=tk;d.transportCost=tripData.themes[tk].cost;d.items=sortT([...buildDay(dn,tk,this.selectedFlight),...foods]);this.save();this.animateDay();},
+        toggleFood(fid){const f=tripData.foods.find(x=>x.id===fid);if(!f)return;const on=!!this.state.checkedFoods[fid];this.state.days.forEach(d=>d.items=d.items.filter(x=>x.foodId!==fid));if(on){delete this.state.checkedFoods[fid];this.toast(`已移除 ${f.short}`);}else{this.state.checkedFoods[fid]=this.activeDay;this.currentDay.items.push({id:`food_${fid}`,time:f.time,category:'美食',title:f.name,note:f.note,foodId:fid});this.toast(`已加入 Day ${this.activeDay}：${f.short}`);}this.save();},
+        addItem(){if(!this.newItem.title.trim())return this.toast('請輸入行程名稱');this.currentDay.items.push({id:uid(),...this.newItem});this.newItem={time:'15:00',category:'景點',title:'',note:''};this.save();this.toast('已新增行程');},
+        delItem(id){const it=this.currentDay.items.find(x=>x.id===id);if(it?.foodId)delete this.state.checkedFoods[it.foodId];this.currentDay.items=this.currentDay.items.filter(x=>x.id!==id);this.save();},
+        syncJpy(){this.fxTwd=Math.round((Number(this.fxJpy)||0)*(Number(this.state.fxRate)||.21));},
+        syncTwd(){this.fxJpy=Math.round((Number(this.fxTwd)||0)/(Number(this.state.fxRate)||.21));},
+        addExp(){if(!this.exp.name.trim()||!(Number(this.exp.amt)>0))return this.toast('請輸入品項與金額');this.state.expenses.unshift({id:uid(),name:this.exp.name.trim(),cur:this.exp.cur,amt:Number(this.exp.amt)});this.exp={name:'',cur:this.exp.cur,amt:''};this.save();this.toast('已新增記帳');},
+        delExp(id){this.state.expenses=this.state.expenses.filter(x=>x.id!==id);this.save();},
+get activePrefObj(){return KYUSHU_MAP.find(p=>p.id===this.activePref)||KYUSHU_MAP[0];},
+        get hoverPrefObj(){return KYUSHU_MAP.find(p=>p.id===(this.hoverPref||this.activePref))||KYUSHU_MAP[0];},
+        selectPref(id){this.activePref=id;this.refreshIcons();},
+        hasInspiration(id){return (this.state.inspirations||[]).some(x=>x.id===id);},
+        toggleInspiration(p){
+          if(!Array.isArray(this.state.inspirations)) this.state.inspirations=[];
+          const exists=this.hasInspiration(p.id);
+          this.state.inspirations=exists?this.state.inspirations.filter(x=>x.id!==p.id):[...this.state.inspirations,{id:p.id,name:p.name,fromHakata:p.fromHakata,spot:p.spots[0].t,note:`${p.spots[0].d} · 必吃：${p.foods.slice(0,2).join('、')}`}];
+          this.save();this.toast(exists?`已移出靈感清單：${p.short||p.name}`:`已收藏靈感：${p.name}`);
+        },
+        pushInspirationToDay(item){
+          this.currentDay.items.push({id:uid(),time:'10:00',category:'景點',title:`${item.name}：${item.spot}`,note:item.note});
+          this.save();this.toast(`已加入 Day ${this.activeDay} 行程，可切回總覽微調`);
+        }
+      };
+    };
+  </script>
+</body>
+</html>
