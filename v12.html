@@ -1069,23 +1069,27 @@
     
 <!-- 美食與伴手禮即時關鍵字搜尋框（支援店名、區域、日文招牌、多關鍵字） -->
 
-
-      <div class="sticky-search sticky top-14 sm:top-16 z-30 rounded-full bg-[#F6F4EF]/90 backdrop-blur-md border border-[#EAE6DF] shadow-sm focus-within:border-[#9E6B4F] transition">
-
-
-        <i data-lucide="search" class="w-4 h-4 text-[#9E6B4F] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-
-
-        <input type="text" inputmode="search" x-model="q" @input="activeFlip = null" @keydown.escape="q = ''; activeFlip = null" placeholder="搜尋店名、區域或必點菜色（例：博多 拉麵、明太子、天神）..." class="w-full pl-11 pr-24 py-2.5 rounded-full bg-transparent border-0 text-xs sm:text-sm text-[#1F1E1C] placeholder:text-[#8A847A] focus:outline-none focus:border-[#9E6B4F] transition" />
-        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          <span class="text-[11px] text-[#8A847A] tabular-nums" x-text="`${filteredGourmet.filter(g => match(g, q)).length} 筆`"></span>
-          <button type="button" x-show="q" x-cloak @click="q = ''; activeFlip = null" aria-label="清除搜尋" class="w-5 h-5 rounded-full bg-[#EAE6DF] text-[#6F6A62] hover:text-[#1F1E1C] flex items-center justify-center text-[10px]">✕</button>
-<!-- 全九州縣市區域快篩膠囊（再點一次即取消篩選） -->
+<!-- 智慧吸頂整合列：搜尋框 ＋ 橫向滑動分類與區域篩選（避免手機重疊） -->
+      <div class="sticky-search sticky top-14 sm:top-16 z-30 p-3 space-y-2.5 rounded-2xl bg-[#F6F4EF]/90 backdrop-blur-md border border-[#EAE6DF] shadow-sm">
+        <div class="relative rounded-full bg-transparent border border-[#A67B56]/35 focus-within:border-[#A67B56] transition">
+          <i data-lucide="search" class="w-4 h-4 text-[#9E6B4F] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input type="text" inputmode="search" x-model="q" @input="activeFlip = null" @keydown.escape="q = ''; activeFlip = null" placeholder="搜尋店名、區域或必點菜色（例：博多 拉麵、明太子、天神）..." class="w-full pl-11 pr-24 py-2 rounded-full bg-transparent border-0 text-xs sm:text-sm text-[#1F1E1C] placeholder:text-[#8A847A] focus:outline-none" />
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <span class="text-[11px] text-[#8A847A] tabular-nums" x-text="`${filteredGourmet.filter(g => match(g, q)).length} 筆`"></span>
+            <button type="button" x-show="q" x-cloak @click="q = ''; activeFlip = null" aria-label="清除搜尋" class="w-5 h-5 rounded-full bg-[#EAE6DF] text-[#6F6A62] hover:text-[#1F1E1C] flex items-center justify-center text-[10px]">✕</button>
+          </div>
+        </div>
+        <div class="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar [&>button]:shrink-0">
+          <!-- 全九州縣市區域快篩膠囊（再點一次即取消篩選） -->
         <template x-for="r in ['大分','熊本','長崎','佐賀','南九州']" :key="r">
           <button type="button" @click="q = (q === r ? '' : r); activeFlip = null" class="px-3 py-1.5 rounded-full text-xs border transition whitespace-nowrap" :class="q === r ? 'bg-[#1F1E1C] text-[#F9F8F6] border-[#1F1E1C] font-medium' : 'bg-[#F9F8F6] text-[#6F6A62] border-[#EAE6DF] hover:border-[#1F1E1C]'" x-text="r"></button>
         </template>
-
         </div>
+      </div>
+    
+
+
+
       </div>
 <!-- 頁首標題與攻略進度條 -->
     <div class="bento rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-end justify-between gap-5">
